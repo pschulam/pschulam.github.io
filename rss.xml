@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-stylesheet type="text/xsl" href="assets/xml/rss.xsl" media="all"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Peter Schulam</title><link>http://pschulam.github.io/</link><description>Peter Schulam's academic homepage.</description><atom:link href="http://pschulam.github.io/rss.xml" rel="self" type="application/rss+xml"></atom:link><language>en</language><copyright>Contents © 2018 &lt;a href="mailto:pschulam@gmail.com"&gt;Peter Schulam&lt;/a&gt; </copyright><lastBuildDate>Sat, 24 Mar 2018 20:22:46 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Inference in Linear Dynamical Systems</title><link>http://pschulam.github.io/posts/inference_in_linear_dynamical_systems/</link><dc:creator>Peter Schulam</dc:creator><description>&lt;div tabindex="-1" id="notebook" class="border-box-sizing"&gt;
+<?xml-stylesheet type="text/xsl" href="assets/xml/rss.xsl" media="all"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Peter Schulam</title><link>http://pschulam.github.io/</link><description>Peter Schulam's academic homepage.</description><atom:link href="http://pschulam.github.io/rss.xml" rel="self" type="application/rss+xml"></atom:link><language>en</language><copyright>Contents © 2018 &lt;a href="mailto:pschulam@gmail.com"&gt;Peter Schulam&lt;/a&gt; </copyright><lastBuildDate>Sat, 24 Mar 2018 20:42:50 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Inference in Linear Dynamical Systems</title><link>http://pschulam.github.io/posts/inference_in_linear_dynamical_systems/</link><dc:creator>Peter Schulam</dc:creator><description>&lt;div tabindex="-1" id="notebook" class="border-box-sizing"&gt;
     &lt;div class="container" id="notebook-container"&gt;
 
 &lt;div class="cell border-box-sizing text_cell rendered"&gt;&lt;div class="prompt input_prompt"&gt;
@@ -7,18 +7,40 @@
 &lt;div class="inner_cell"&gt;
 &lt;div class="text_cell_render border-box-sizing rendered_html"&gt;
 &lt;h2 id="Inference-in-Linear-Dynamical-Systems"&gt;Inference in Linear Dynamical Systems&lt;a class="anchor-link" href="http://pschulam.github.io/posts/inference_in_linear_dynamical_systems/#Inference-in-Linear-Dynamical-Systems"&gt;¶&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Linear dynamical systems (LDS) are a core tool in time series processing. They are most often discussed in the discrete-time setting, which seems to limit their applicability. Turns out, however, that even when when we want to work in continuous time, we often approximate the system with discrete steps for inference and estimation. If you've studied discrete state hidden Markov models, then many of the core inference algorithms for an LDS may be familiar. One of the key algorithms is smoothing, which is typically solved using the forwards-backwards (or Baum-Welch) algorithm when using discrete states. When working with continuous states, however, there is another approach to smoothing that is simpler to implement using standard operations on multivariate normal distributions. The smoothing algorithm also suggests a simple sampling algorithm that can be used to draw samples from the posterior distribution over states. This post reviews these ideas.&lt;/p&gt;
+&lt;h3 id="Linear-Dynamical-Systems"&gt;Linear Dynamical Systems&lt;a class="anchor-link" href="http://pschulam.github.io/posts/inference_in_linear_dynamical_systems/#Linear-Dynamical-Systems"&gt;¶&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;An LDS is a system that describes the progression of a state $x$ over time. In this post, we'll model the state over a set of discrete times $[1, \ldots, T]$, and we'll denote the observation at a particular time using $x_k$. The expected value of $x_{k+1}$ is $A x_k$.&lt;/p&gt;
+&lt;h3 id="Key-Operations"&gt;Key Operations&lt;a class="anchor-link" href="http://pschulam.github.io/posts/inference_in_linear_dynamical_systems/#Key-Operations"&gt;¶&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;To implement the smoother, we need to pass around information in the form of probability distributions. In an LDS, everything is a multivariate normal distribution, which makes it easy to compute the distributions we need. There are two key operations: &lt;code&gt;predict&lt;/code&gt; and &lt;code&gt;update&lt;/code&gt;. We'll write down the math behind these operations and then implement them in Python. We can parameterize a multivariate normal using its mean and covariance, which we'll denote using $m$ and $S$ respectively.&lt;/p&gt;
+&lt;p&gt;The first operation we need to implement is &lt;code&gt;predict&lt;/code&gt;. This function transforms a multivariate normal distribution over $x_k$ into a distribution over $x_{k+1}$ using the rules described the system. We can therefore think of it as a function from an LDS and multivariate normal to another multivariate normal (the linearity of the system means that the output is a multivariate normal). Since a multivariate normal is determined by its mean and covariance, we just need to figure out what these are. If we are given $x_k$, then the mean and variance are
+$$
+\mathbb{E}[x_{k+1} \mid x_{k}, \mathcal{M}] = A x_{k}, \\
+\mathbb{V}[x_{k+1} \mid x_{k}, \mathcal{M}] = P.
+$$
+If the distribution over $x_k$ is multivariate normal with mean $m_k$ and covariance $C_k$, then&lt;/p&gt;
 
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;div class="cell border-box-sizing text_cell rendered"&gt;&lt;div class="prompt input_prompt"&gt;
-&lt;/div&gt;
+&lt;div class="cell border-box-sizing code_cell rendered"&gt;
+&lt;div class="input"&gt;
+&lt;div class="prompt input_prompt"&gt;In [2]:&lt;/div&gt;
 &lt;div class="inner_cell"&gt;
-&lt;div class="text_cell_render border-box-sizing rendered_html"&gt;
-&lt;h3 id="Key-Operations"&gt;Key Operations&lt;a class="anchor-link" href="http://pschulam.github.io/posts/inference_in_linear_dynamical_systems/#Key-Operations"&gt;¶&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;To implement the smoother, we need to pass around information in the form of probability distributions. In an LDS, everything is a multivariate normal distribution, which makes it easy to compute the distributions we need. There are two key operations: predict and update. We'll write down the math behind these operations and then implement them in Python.&lt;/p&gt;
+    &lt;div class="input_area"&gt;
+&lt;div class=" highlight hl-ipython3"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;collections&lt;/span&gt; &lt;span class="k"&gt;import&lt;/span&gt; &lt;span class="n"&gt;namedtuple&lt;/span&gt;
+
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;numpy&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="nn"&gt;np&lt;/span&gt;
+
+&lt;span class="n"&gt;LDS&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;namedtuple&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;'LDS'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'A'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;'B'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;'P'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;'Q'&lt;/span&gt;&lt;span class="p"&gt;])&lt;/span&gt;
+&lt;span class="n"&gt;MVN&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;namedtuple&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;'MVN'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'m'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;'C'&lt;/span&gt;&lt;span class="p"&gt;])&lt;/span&gt;
+
+&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;mvn_predict&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;mvn&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;lds&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;np&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;dot&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;lds&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;mvn&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;m&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="n"&gt;C&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;np&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;dot&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;lds&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;np&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;dot&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;lds&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;P&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;lds&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;T&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;lds&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Q&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;MVN&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;m&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
 
 &lt;/div&gt;
 &lt;/div&gt;
+&lt;/div&gt;
+
 &lt;/div&gt;
     &lt;/div&gt;
   &lt;/div&gt;
