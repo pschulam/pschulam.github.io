@@ -11,14 +11,18 @@
  </url>
  <url>
   <loc>http://pschulam.github.io/2018/</loc>
-  <lastmod>2018-03-24T20:22:00Z</lastmod>
+  <lastmod>2018-03-24T21:02:00Z</lastmod>
  </url>
  <url>
   <loc>http://pschulam.github.io/archive.html</loc>
-  <lastmod>2018-03-24T20:51:00Z</lastmod>
+  <lastmod>2018-03-24T21:02:00Z</lastmod>
  </url>
  <url>
   <loc>http://pschulam.github.io/categories/</loc>
   <lastmod>2018-03-24T20:22:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://pschulam.github.io/posts/gaussian_message_passing/</loc>
+  <lastmod>2018-03-24T21:02:00Z</lastmod>
  </url>
 </urlset>
