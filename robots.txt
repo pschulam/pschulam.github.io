@@ -1,4 +1,4 @@
-Sitemap: http://pschulam.com/sitemapindex.xml
+Sitemap: http://pschulam.github.io/sitemapindex.xml
 
 User-Agent: *
-Host: pschulam.com
+Host: pschulam.github.io
