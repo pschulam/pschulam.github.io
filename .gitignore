@@ -1,3 +1,8 @@
+cache
+output
+.doit.db
+_env/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
