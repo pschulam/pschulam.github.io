@@ -17,6 +17,7 @@
 <link rel="alternate" type="application/rss+xml" title="RSS" href="../../rss.xml">
 <link rel="canonical" href="http://pschulam.github.io/posts/inference_in_linear_dynamical_systems/">
 <!--[if lt IE 9]><script src="../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Peter Schulam">
+<meta name="robots" content="noindex">
 <meta property="og:site_name" content="Peter Schulam">
 <meta property="og:title" content="Inference in Linear Dynamical Systems">
 <meta property="og:url" content="http://pschulam.github.io/posts/inference_in_linear_dynamical_systems/">
@@ -100,6 +101,8 @@
 <h2 id="Inference-in-Linear-Dynamical-Systems">Inference in Linear Dynamical Systems<a class="anchor-link" href="#Inference-in-Linear-Dynamical-Systems">¶</a>
 </h2>
 <p>Linear dynamical systems (LDS) are a core tool in time series processing. They are most often discussed in the discrete-time setting, which seems to limit their applicability. Turns out, however, that even when when we want to work in continuous time, we often approximate the system with discrete steps for inference and estimation. If you've studied discrete state hidden Markov models, then many of the core inference algorithms for an LDS may be familiar. One of the key algorithms is smoothing, which is typically solved using the forwards-backwards (or Baum-Welch) algorithm when using discrete states. When working with continuous states, however, there is another approach to smoothing that is simpler to implement using standard operations on multivariate normal distributions. The smoothing algorithm also suggests a simple sampling algorithm that can be used to draw samples from the posterior distribution over states. This post reviews these ideas.</p>
+<!-- TEASER_END -->
+
 <h3 id="Linear-Dynamical-Systems">Linear Dynamical Systems<a class="anchor-link" href="#Linear-Dynamical-Systems">¶</a>
 </h3>
 <p>An LDS is a system that describes the progression of a state $x$ over time. In this post, we'll model the state over a set of discrete times $[1, \ldots, T]$, and we'll denote the observation at a particular time using $x_k$. The expected value of $x_{k+1}$ is $A x_k$.</p>
@@ -118,7 +121,7 @@ If the distribution over $x_k$ is multivariate normal with mean $m_k$ and covari
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [2]:</div>
+<div class="prompt input_prompt">In [3]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
@@ -129,8 +132,9 @@ If the distribution over $x_k$ is multivariate normal with mean $m_k$ and covari
 <span class="n">MVN</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">'MVN'</span><span class="p">,</span> <span class="p">[</span><span class="s1">'m'</span><span class="p">,</span> <span class="s1">'C'</span><span class="p">])</span>
 
 <span class="k">def</span> <span class="nf">mvn_predict</span><span class="p">(</span><span class="n">mvn</span><span class="p">,</span> <span class="n">lds</span><span class="p">):</span>
-    <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">lds</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="n">mvn</span><span class="o">.</span><span class="n">m</span><span class="p">)</span>
-    <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">lds</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">lds</span><span class="o">.</span><span class="n">P</span><span class="p">,</span> <span class="n">lds</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">T</span><span class="p">))</span> <span class="o">+</span> <span class="n">lds</span><span class="o">.</span><span class="n">Q</span>
+    <span class="n">A</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">lds</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">mvn</span><span class="o">.</span><span class="n">m</span><span class="p">)</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">mvn</span><span class="o">.</span><span class="n">C</span><span class="p">,</span> <span class="n">A</span><span class="o">.</span><span class="n">T</span><span class="p">))</span> <span class="o">+</span> <span class="n">P</span>
     <span class="k">return</span> <span class="n">MVN</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">C</span><span class="p">)</span>
 </pre></div>
 

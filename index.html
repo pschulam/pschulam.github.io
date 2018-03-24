@@ -17,7 +17,7 @@
 <meta name="generator" content="Nikola (getnikola.com)">
 <link rel="alternate" type="application/rss+xml" title="RSS" href="rss.xml">
 <link rel="canonical" href="http://pschulam.github.io/">
-<!--[if lt IE 9]><script src="assets/js/html5.js"></script><![endif]--><link rel="prefetch" href="posts/inference_in_linear_dynamical_systems/" type="text/html">
+<!--[if lt IE 9]><script src="assets/js/html5.js"></script><![endif]-->
 </head>
 <body>
 <a href="#content" class="sr-only sr-only-focusable">Skip to main content</a>
@@ -70,80 +70,15 @@
 
     
 <div class="postindex">
-    <article class="h-entry post-text"><header><h1 class="p-name entry-title"><a href="posts/inference_in_linear_dynamical_systems/" class="u-url">Inference in Linear Dynamical Systems</a></h1>
-        <div class="metadata">
-            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
-                Peter Schulam
-            </span></p>
-            <p class="dateline"><a href="posts/inference_in_linear_dynamical_systems/" rel="bookmark"><time class="published dt-published" datetime="2018-03-24T16:11:00-04:00" title="2018-03-24 16:11">2018-03-24 16:11</time></a></p>
+</div>
+
+
+
+
+
+
+
         </div>
-    </header><div class="e-content entry-content">
-    <div tabindex="-1" id="notebook" class="border-box-sizing">
-    <div class="container" id="notebook-container">
-
-<div class="cell border-box-sizing text_cell rendered">
-<div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Inference-in-Linear-Dynamical-Systems">Inference in Linear Dynamical Systems<a class="anchor-link" href="posts/inference_in_linear_dynamical_systems/#Inference-in-Linear-Dynamical-Systems">¶</a>
-</h2>
-<p>Linear dynamical systems (LDS) are a core tool in time series processing. They are most often discussed in the discrete-time setting, which seems to limit their applicability. Turns out, however, that even when when we want to work in continuous time, we often approximate the system with discrete steps for inference and estimation. If you've studied discrete state hidden Markov models, then many of the core inference algorithms for an LDS may be familiar. One of the key algorithms is smoothing, which is typically solved using the forwards-backwards (or Baum-Welch) algorithm when using discrete states. When working with continuous states, however, there is another approach to smoothing that is simpler to implement using standard operations on multivariate normal distributions. The smoothing algorithm also suggests a simple sampling algorithm that can be used to draw samples from the posterior distribution over states. This post reviews these ideas.</p>
-<h3 id="Linear-Dynamical-Systems">Linear Dynamical Systems<a class="anchor-link" href="posts/inference_in_linear_dynamical_systems/#Linear-Dynamical-Systems">¶</a>
-</h3>
-<p>An LDS is a system that describes the progression of a state $x$ over time. In this post, we'll model the state over a set of discrete times $[1, \ldots, T]$, and we'll denote the observation at a particular time using $x_k$. The expected value of $x_{k+1}$ is $A x_k$.</p>
-<h3 id="Key-Operations">Key Operations<a class="anchor-link" href="posts/inference_in_linear_dynamical_systems/#Key-Operations">¶</a>
-</h3>
-<p>To implement the smoother, we need to pass around information in the form of probability distributions. In an LDS, everything is a multivariate normal distribution, which makes it easy to compute the distributions we need. There are two key operations: <code>predict</code> and <code>update</code>. We'll write down the math behind these operations and then implement them in Python. We can parameterize a multivariate normal using its mean and covariance, which we'll denote using $m$ and $S$ respectively.</p>
-<p>The first operation we need to implement is <code>predict</code>. This function transforms a multivariate normal distribution over $x_k$ into a distribution over $x_{k+1}$ using the rules described the system. We can therefore think of it as a function from an LDS and multivariate normal to another multivariate normal (the linearity of the system means that the output is a multivariate normal). Since a multivariate normal is determined by its mean and covariance, we just need to figure out what these are. If we are given $x_k$, then the mean and variance are
-$$
-\mathbb{E}[x_{k+1} \mid x_{k}, \mathcal{M}] = A x_{k}, \\
-\mathbb{V}[x_{k+1} \mid x_{k}, \mathcal{M}] = P.
-$$
-If the distribution over $x_k$ is multivariate normal with mean $m_k$ and covariance $C_k$, then</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In [2]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
-
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-
-<span class="n">LDS</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">'LDS'</span><span class="p">,</span> <span class="p">[</span><span class="s1">'A'</span><span class="p">,</span> <span class="s1">'B'</span><span class="p">,</span> <span class="s1">'P'</span><span class="p">,</span> <span class="s1">'Q'</span><span class="p">])</span>
-<span class="n">MVN</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">'MVN'</span><span class="p">,</span> <span class="p">[</span><span class="s1">'m'</span><span class="p">,</span> <span class="s1">'C'</span><span class="p">])</span>
-
-<span class="k">def</span> <span class="nf">mvn_predict</span><span class="p">(</span><span class="n">mvn</span><span class="p">,</span> <span class="n">lds</span><span class="p">):</span>
-    <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">lds</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="n">mvn</span><span class="o">.</span><span class="n">m</span><span class="p">)</span>
-    <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">lds</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">lds</span><span class="o">.</span><span class="n">P</span><span class="p">,</span> <span class="n">lds</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">T</span><span class="p">))</span> <span class="o">+</span> <span class="n">lds</span><span class="o">.</span><span class="n">Q</span>
-    <span class="k">return</span> <span class="n">MVN</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">C</span><span class="p">)</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-</div>
-    </div>
-  </div>
-
-    </div>
-    </article>
-</div>
-
-
-
-
-
-        
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML" integrity="sha256-SDRP1VVYu+tgAGKhddBSl5+ezofHKZeI+OzxakbIe/Y=" crossorigin="anonymous"></script><script type="text/x-mathjax-config">
-        MathJax.Hub.Config({tex2jax: {inlineMath: [['$latex ','$'], ['\\(','\\)']]}});
-        </script>
-</div>
         <!--End of body content-->
 
         <footer id="footer">
