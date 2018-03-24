@@ -194,6 +194,7 @@ PAGES = (
     ("pages/*.md", "pages", "page.tmpl"),
     ("pages/*.txt", "pages", "page.tmpl"),
     ("pages/*.html", "pages", "page.tmpl"),
+    ("pages/*.ipynb", "pages", "page.tmpl")
 )
 
 
