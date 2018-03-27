@@ -18,6 +18,7 @@
 <link rel="canonical" href="http://pschulam.github.io/posts/the_kalman_filter/">
 <!--[if lt IE 9]><script src="../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Peter Schulam">
 <link rel="prev" href="../parameterizing_joint_gaussians/" title="Parameterizing Joint Gaussians" type="text/html">
+<link rel="next" href="../inference_in_linear_dynamical_systems/" title="Inference in Linear Dynamical Systems" type="text/html">
 <meta property="og:site_name" content="Peter Schulam">
 <meta property="og:title" content="The Kalman Filter">
 <meta property="og:url" content="http://pschulam.github.io/posts/the_kalman_filter/">
@@ -218,11 +219,11 @@ H C H^\top + R = L L^\top.
 $$</p>
 <p>Then define $Z \triangleq L^{-1} H C$ and $X \triangleq L^{-\top} Z$, which implies</p>
 <p>$$
-\mathbb{E} \big[ x_k \mid y_k \big] = m + X (y_k - H m),
+\mathbb{E} \big[ x_k \mid y_k \big] = m + X^\top (y_k - H m),
 $$</p>
 <p>and</p>
 <p>$$
-\textsf{Cov} \big[ x_k \mid y_k \big] = C - Z Z^\top.
+\textsf{Cov} \big[ x_k \mid y_k \big] = C - Z^\top Z.
 $$</p>
 <p>Here is some Python code implementing these ideas.</p>
 
@@ -248,8 +249,8 @@ $$</p>
     <span class="n">L</span> <span class="o">=</span> <span class="n">cholesky</span><span class="p">(</span><span class="n">H</span> <span class="o">@</span> <span class="n">C</span> <span class="o">@</span> <span class="n">H</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">R</span><span class="p">)</span>
     <span class="n">Z</span> <span class="o">=</span> <span class="n">solve_tril</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">H</span> <span class="o">@</span> <span class="n">C</span><span class="p">)</span>
     <span class="n">X</span> <span class="o">=</span> <span class="n">solve_triu</span><span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">Z</span><span class="p">)</span>
-    <span class="n">m_c</span> <span class="o">=</span> <span class="n">m</span> <span class="o">+</span> <span class="n">X</span> <span class="o">@</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">H</span> <span class="o">@</span> <span class="n">m</span><span class="p">)</span>
-    <span class="n">C_c</span> <span class="o">=</span> <span class="n">C</span> <span class="o">-</span> <span class="n">Z</span> <span class="o">@</span> <span class="n">Z</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">m_c</span> <span class="o">=</span> <span class="n">m</span> <span class="o">+</span> <span class="n">X</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">H</span> <span class="o">@</span> <span class="n">m</span><span class="p">)</span>
+    <span class="n">C_c</span> <span class="o">=</span> <span class="n">C</span> <span class="o">-</span> <span class="n">Z</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">Z</span>
     <span class="k">return</span> <span class="n">m_c</span><span class="p">,</span> <span class="n">C_c</span>
 </pre></div>
 
@@ -341,8 +342,8 @@ $$</p>
     <span class="n">L</span> <span class="o">=</span> <span class="n">cholesky</span><span class="p">(</span><span class="n">H</span> <span class="o">@</span> <span class="n">C</span> <span class="o">@</span> <span class="n">H</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">R</span><span class="p">)</span>
     <span class="n">Z</span> <span class="o">=</span> <span class="n">solve_tril</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">H</span> <span class="o">@</span> <span class="n">C</span><span class="p">)</span>
     <span class="n">X</span> <span class="o">=</span> <span class="n">solve_triu</span><span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">Z</span><span class="p">)</span>
-    <span class="n">m_c</span> <span class="o">=</span> <span class="n">m</span> <span class="o">+</span> <span class="n">X</span> <span class="o">@</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">H</span> <span class="o">@</span> <span class="n">m</span><span class="p">)</span>
-    <span class="n">C_c</span> <span class="o">=</span> <span class="n">C</span> <span class="o">-</span> <span class="n">Z</span> <span class="o">@</span> <span class="n">Z</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">m_c</span> <span class="o">=</span> <span class="n">m</span> <span class="o">+</span> <span class="n">X</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">H</span> <span class="o">@</span> <span class="n">m</span><span class="p">)</span>
+    <span class="n">C_c</span> <span class="o">=</span> <span class="n">C</span> <span class="o">-</span> <span class="n">Z</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">Z</span>
     <span class="k">return</span> <span class="n">m_c</span><span class="p">,</span> <span class="n">C_c</span>
 
 <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
@@ -368,6 +369,9 @@ $$</p>
 <ul class="pager hidden-print">
 <li class="previous">
                 <a href="../parameterizing_joint_gaussians/" rel="prev" title="Parameterizing Joint Gaussians">Previous post</a>
+            </li>
+            <li class="next">
+                <a href="../inference_in_linear_dynamical_systems/" rel="next" title="Inference in Linear Dynamical Systems">Next post</a>
             </li>
         </ul></nav></aside><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML" integrity="sha256-SDRP1VVYu+tgAGKhddBSl5+ezofHKZeI+OzxakbIe/Y=" crossorigin="anonymous"></script><script type="text/x-mathjax-config">
 MathJax.Hub.Config({
