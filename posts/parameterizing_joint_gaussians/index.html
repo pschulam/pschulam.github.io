@@ -17,13 +17,13 @@
 <link rel="alternate" type="application/rss+xml" title="RSS" href="../../rss.xml">
 <link rel="canonical" href="http://pschulam.github.io/posts/parameterizing_joint_gaussians/">
 <!--[if lt IE 9]><script src="../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Peter Schulam">
-<meta name="robots" content="noindex">
 <meta property="og:site_name" content="Peter Schulam">
 <meta property="og:title" content="Parameterizing Joint Gaussians">
 <meta property="og:url" content="http://pschulam.github.io/posts/parameterizing_joint_gaussians/">
 <meta property="og:description" content="Parameterizing Joint Gaussians¶Multivariate normal (Gaussian) distributions are a common default choice for specifying the joint probability distribution over two random vectors. There are a couple of">
 <meta property="og:type" content="article">
 <meta property="article:published_time" content="2018-03-27T09:00:00-04:00">
+<meta property="article:tag" content="probability">
 </head>
 <body>
 <a href="#content" class="sr-only sr-only-focusable">Skip to main content</a>
@@ -175,7 +175,7 @@ $$</p>
 <p>$$
 x_2 \sim \mathcal{N} (m_2, C_2).
 $$</p>
-<p>On the other hand, to get the marginal over $x_2$ using the conditional parameterization requires.</p>
+<p>On the other hand, to get the marginal over $x_2$ using the conditional parameterization requires $O(n_1 n_2)$ flops to compute the mean and $O(n_1 n_2^2)$ operations to compute the covariance.</p>
 
 </div>
 </div>
@@ -184,7 +184,9 @@ $$</p>
   </div>
 
     </div>
-    <aside class="postpromonav"><nav></nav></aside><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML" integrity="sha256-SDRP1VVYu+tgAGKhddBSl5+ezofHKZeI+OzxakbIe/Y=" crossorigin="anonymous"></script><script type="text/x-mathjax-config">
+    <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
+<li><a class="tag p-category" href="../../categories/probability/" rel="tag">probability</a></li>
+        </ul></nav></aside><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML" integrity="sha256-SDRP1VVYu+tgAGKhddBSl5+ezofHKZeI+OzxakbIe/Y=" crossorigin="anonymous"></script><script type="text/x-mathjax-config">
         MathJax.Hub.Config({tex2jax: {inlineMath: [['$latex ','$'], ['\\(','\\)']]}});
         </script></article>
 </div>
