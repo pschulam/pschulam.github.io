@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Kalman Filter | Peter Schulam</title>
+<link href="../../assets/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+<link href="../../assets/css/html4css1.css" rel="stylesheet" type="text/css">
+<link href="../../assets/css/nikola_rst.css" rel="stylesheet" type="text/css">
+<link href="../../assets/css/code.css" rel="stylesheet" type="text/css">
+<link href="../../assets/css/colorbox.css" rel="stylesheet" type="text/css">
+<link href="../../assets/css/theme.css" rel="stylesheet" type="text/css">
+<link href="../../assets/css/ipython.min.css" rel="stylesheet" type="text/css">
+<link href="../../assets/css/nikola_ipython.css" rel="stylesheet" type="text/css">
+<meta name="theme-color" content="#5670d4">
+<meta name="generator" content="Nikola (getnikola.com)">
+<link rel="alternate" type="application/rss+xml" title="RSS" href="../../rss.xml">
+<link rel="canonical" href="http://pschulam.github.io/posts/the_kalman_filter/">
+<!--[if lt IE 9]><script src="../../assets/js/html5.js"></script><![endif]--><meta name="author" content="Peter Schulam">
+<link rel="prev" href="../parameterizing_joint_gaussians/" title="Parameterizing Joint Gaussians" type="text/html">
+<meta property="og:site_name" content="Peter Schulam">
+<meta property="og:title" content="The Kalman Filter">
+<meta property="og:url" content="http://pschulam.github.io/posts/the_kalman_filter/">
+<meta property="og:description" content="Kalman Filter¶The Kalman filter is a fundamental algorithm when analyzing and learning from time series data. If you're familiar with the forwards/backwards (or Baum-Welch) algorithm used for discrete">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2018-03-27T10:30:00-04:00">
+<meta property="article:tag" content="control">
+<meta property="article:tag" content="dynamical-systems">
+<meta property="article:tag" content="probability">
+</head>
+<body>
+<a href="#content" class="sr-only sr-only-focusable">Skip to main content</a>
+
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-static-top"><div class="container">
+<!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar" aria-controls="bs-navbar" aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://pschulam.github.io/">
+
+                <span id="blog-title">Peter Schulam</span>
+            </a>
+        </div>
+<!-- /.navbar-header -->
+        <div class="collapse navbar-collapse" id="bs-navbar" aria-expanded="false">
+            <ul class="nav navbar-nav">
+<li>
+<a href="../../archive.html">Archive</a>
+                </li>
+<li>
+<a href="../../categories/">Tags</a>
+                </li>
+<li>
+<a href="../../rss.xml">RSS feed</a>
+
+                
+            </li>
+</ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+    <a href="index.ipynb" id="sourcelink">Source</a>
+    </li>
+
+                
+            </ul>
+</div>
+<!-- /.navbar-collapse -->
+    </div>
+<!-- /.container -->
+</nav><!-- End of Menubar --><div class="container" id="content" role="main">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+            
+<article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="." class="u-url">The Kalman Filter</a></h1>
+
+        <div class="metadata">
+            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+                    Peter Schulam
+            </span></p>
+            <p class="dateline"><a href="." rel="bookmark"><time class="published dt-published" datetime="2018-03-27T10:30:00-04:00" itemprop="datePublished" title="2018-03-27 10:30">2018-03-27 10:30</time></a></p>
+            
+        <p class="sourceline"><a href="index.ipynb" class="sourcelink">Source</a></p>
+
+        </div>
+        
+
+    </header><div class="e-content entry-content" itemprop="articleBody text">
+    <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Kalman-Filter">Kalman Filter<a class="anchor-link" href="#Kalman-Filter">¶</a>
+</h2>
+<p>The Kalman filter is a fundamental algorithm when analyzing and learning from time series data. If you're familiar with the forwards/backwards (or Baum-Welch) algorithm used for discrete state, discrete observation hidden Markov models, then you already know the basics. The Kalman filter is the forwards algorithm generalized to non-discrete states and observations. In this post, we'll review the Kalman filter in the linear Gaussian case.</p>
+<!-- TEASER_END -->
+
+<h3 id="Linear-Dynamical-Systems">Linear Dynamical Systems<a class="anchor-link" href="#Linear-Dynamical-Systems">¶</a>
+</h3>
+<p>The Kalman filter was developed as a tracking algorithm. The idea is to infer the unobserved location or state of an object given noisy, indirect measurements over time. We can abstract from the idea of tracking by instead studying <em>linear dynamical systems</em> (LDS). An LDS is a probabilistic model of two processes: dynamics and measurement. The dynamics model describes how the unobserved state of the system changes from one time to the next, and the measurement model tells us how our observations depend on the underlying system state. The Kalman filter combines the dynamics and measurement models with observed data to estimate the system state over time.</p>
+<p>The dynamics model is simply a conditional probability distribution of a state given the previous state. Think of this as the probabilistic analog of a difference equation (or differential equation in continuous time). We index time using integers $k \in \mathbb{Z}$, and write the state at time $k$ as $x_k \in \mathbb{R}^n$. In addition to the state vectors, we assume that there are inputs $u_k \in \mathbb{R}^m$ at each step that influence the dynamics. The dynamics model is</p>
+<p>$$
+x_{k+1} \mid x_k, u_k, F, G, Q \sim
+\mathcal{N} \big( F x_k + G u_k , Q \big).
+$$</p>
+<p>The measurement model is also a conditional probability distribution. At each time $k$ we may be able to measure the underlying state and receive observations $y_k \in \mathbb{R}^o$. The measurement model is</p>
+<p>$$
+y_k \mid x_k, H, R \sim
+\mathcal{N} \big( H x_k, R \big).
+$$</p>
+<p>For the rest of this post, we'll assume that the system parameters $\mathcal{S} \triangleq (F, G, H, Q, R)$ are known and fixed. To cut down on clutter in the notation, we'll implicitly condition on the system parameters in all of our probabilistic and distributional expressions.</p>
+<h3 id="Filtering">Filtering<a class="anchor-link" href="#Filtering">¶</a>
+</h3>
+<p>The filtering algorithm takes three inputs: an initial belief (or distribution) about the latent state, a sequence of measurements, and a sequence of inputs. Given these inputs, the filtering algorithm involves repeating two fundamental operations: <code>correct</code> and <code>predict</code>.</p>
+<p>Here's some Python code that sketches how the filter works.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># This code is incomplete; it does not include system parameters.</span>
+<span class="c1"># These functions are meant to highlight the logic behind the Kalman filter only.</span>
+
+<span class="k">def</span> <span class="nf">kalman_filter</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">U</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">U</span><span class="p">):</span>
+        <span class="n">m</span><span class="p">,</span> <span class="n">C</span> <span class="o">=</span> <span class="n">kalman_step</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">m</span><span class="p">,</span> <span class="n">C</span>
+
+<span class="k">def</span> <span class="nf">kalman_step</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
+    <span class="n">m_c</span><span class="p">,</span> <span class="n">C_c</span> <span class="o">=</span> <span class="n">correct</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">m_p</span><span class="p">,</span> <span class="n">C_p</span> <span class="o">=</span> <span class="n">predict</span><span class="p">(</span><span class="n">m_c</span><span class="p">,</span> <span class="n">C_c</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">m_p</span><span class="p">,</span> <span class="n">C_p</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The output of the filter is the belief about the latent state at the time step <em>after</em> the final observation and input. To complete the algorithm, we need to implement the <code>correct</code> and <code>predict</code> functions, which depend on the parameters of the system ($\mathcal{S}$, defined above).</p>
+<h4 id="Correct">Correct<a class="anchor-link" href="#Correct">¶</a>
+</h4>
+<p>The <code>correct</code> operation adjusts our belief about the state in light of measurements. If you're familiar with Bayesian linear regression, then <code>correct</code> is simply the posterior distribution over the model weights given data. To compute the correction, we need to define a few new quantities. We assume that the pre-correction belief about $x_k$ is a multivariate normal; let $m$ and $C$ denote the mean and covariance.</p>
+<p>Since the measurement model is also multivariate normal and the mean is a linear function of $x_k$, we can infer two things: the joint distribution over state and measurements is multivariate normal, and the corrected distribution over the state is also multivariate normal. Our goal is to obtain an expression for the latter.</p>
+<p>When we parameterize a joint multivariate normal using its <a href="https://pschulam.github.io/posts/parameterizing_joint_gaussians/">marginal distribution</a>, we get an intuitive expression for the conditional distribution of one component given the others. If we write the joint distribution over $x_k$ and $y_k$ using the marginal parameterization as</p>
+<p>$$
+\begin{bmatrix} x_k \\ y_k \end{bmatrix}
+\sim
+\mathcal{N}
+\left(
+\begin{bmatrix} m_x \\ m_y \end{bmatrix}
+,
+\begin{bmatrix}
+K_{xx} &amp; K_{xy} \\
+K_{xy}^\top &amp; K_{yy}
+\end{bmatrix}
+\right),
+$$</p>
+<p>then the conditional distribution over $x_k$ given $y_k$ is</p>
+<p>$$
+x_k \mid y_k \sim
+\mathcal{N}
+\big(
+m_x + K_{xy} K_{yy}^{-1} (y_k - m_y),
+K_{xx} - K_{xy} K_{yy}^{-1} K_{xy}^\top
+\big).
+$$</p>
+<p>Why is this intuitive? First, the updated mean of the latent state is the uncorrected mean $m_x$ plus a correction term that is a linear function of the difference between the observed and expected value of $y_k$. The corrected covariance is the deflated uncorrected covariance, suggesting that we've learned something (we've reduced variance). Exactly how much we've learned depends on $K_{yy}$ and $K_{xy}$.</p>
+<p>This shows us that one way to implement <code>correct</code> is to (1) convert the conditional parameterization of the joint distribution over $x_k$ and $y_k$ to a marginal parameterization, and (2) compute the conditional distribution of $x_k$ given $y_k$ using the marginal parameterization. To do step one, we have:</p>
+<p>$$
+m_x = m,
+$$</p>
+<p>$$
+K_{xx} = C,
+$$</p>
+<p>$$
+m_y = H m,
+$$</p>
+<p>$$
+K_{yy} = H C H^\top + R,
+$$</p>
+<p>$$
+K_{xy} = C H^\top.
+$$</p>
+<p>Now we can plug these expressions into the conditional distribution of $x_k$ given $y_k$ to see that</p>
+<p>$$
+\mathbb{E} \big[ x_k \mid y_k \big] =
+m + C H^\top ( H C H^\top + R )^{-1} ( y_k - H m ),
+$$</p>
+<p>and</p>
+<p>$$
+\textsf{Cov} \big[ x_k \mid y_k \big] =
+C - C H^\top ( H C H^\top + R)^{-1} H C.
+$$</p>
+<p>To clean this up a bit, we can define the Cholesky decomposition of $K_{yy}$</p>
+<p>$$
+H C H^\top + R = L L^\top.
+$$</p>
+<p>Then define $Z \triangleq L^{-1} H C$ and $X \triangleq L^{-\top} Z$, which implies</p>
+<p>$$
+\mathbb{E} \big[ x_k \mid y_k \big] = m + X (y_k - H m),
+$$</p>
+<p>and</p>
+<p>$$
+\textsf{Cov} \big[ x_k \mid y_k \big] = C - Z Z^\top.
+$$</p>
+<p>Here is some Python code implementing these ideas.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">partial</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="k">import</span> <span class="n">cholesky</span>
+<span class="kn">from</span> <span class="nn">scipy.linalg</span> <span class="k">import</span> <span class="n">solve_triangular</span>
+
+<span class="n">solve_tril</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">solve_triangular</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">solve_triu</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">solve_triangular</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">correct</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="n">cholesky</span><span class="p">(</span><span class="n">H</span> <span class="o">@</span> <span class="n">C</span> <span class="o">@</span> <span class="n">H</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">R</span><span class="p">)</span>
+    <span class="n">Z</span> <span class="o">=</span> <span class="n">solve_tril</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">H</span> <span class="o">@</span> <span class="n">C</span><span class="p">)</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">solve_triu</span><span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">Z</span><span class="p">)</span>
+    <span class="n">m_c</span> <span class="o">=</span> <span class="n">m</span> <span class="o">+</span> <span class="n">X</span> <span class="o">@</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">H</span> <span class="o">@</span> <span class="n">m</span><span class="p">)</span>
+    <span class="n">C_c</span> <span class="o">=</span> <span class="n">C</span> <span class="o">-</span> <span class="n">Z</span> <span class="o">@</span> <span class="n">Z</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">return</span> <span class="n">m_c</span><span class="p">,</span> <span class="n">C_c</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Predict">Predict<a class="anchor-link" href="#Predict">¶</a>
+</h4>
+<p>To wrap up the implementation, we need to describe the <code>predict</code> function. This is easier than the <code>correct</code> function, so we're almost done. Let $m$ and $C$ denote the mean and covariance of the belief about $x_k$. Given the dynamics model in $\mathcal{S}$, the belief about $x_{k+1}$ is</p>
+<p>$$
+x_{k + 1} \sim \mathcal{N} \big( F m + G u_k, F C F^\top + Q \big).
+$$</p>
+<p>Here is a function implementing this in Python.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
+    <span class="n">m_p</span> <span class="o">=</span> <span class="n">F</span> <span class="o">@</span> <span class="n">m</span> <span class="o">+</span> <span class="n">G</span> <span class="o">@</span> <span class="n">u</span>
+    <span class="n">C_p</span> <span class="o">=</span> <span class="n">F</span> <span class="o">@</span> <span class="n">C</span> <span class="o">@</span> <span class="n">F</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">Q</span>
+    <span class="k">return</span> <span class="n">m_p</span><span class="p">,</span> <span class="n">C_p</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Conclusion">Conclusion<a class="anchor-link" href="#Conclusion">¶</a>
+</h3>
+<p>This post described filtering, introduced linear dynamical systems (LDS), and implemented the Kalman filter for Gaussian LDS models. In future posts, we'll describe what we can do once we've got the Kalman filter in our toolbox.</p>
+<p>Here's Python code implementing our complete solution.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">partial</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="k">import</span> <span class="n">cholesky</span>
+<span class="kn">from</span> <span class="nn">scipy.linalg</span> <span class="k">import</span> <span class="n">solve_triangular</span>
+
+<span class="n">solve_tril</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">solve_triangular</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">solve_triu</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">solve_triangular</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="sd">'''</span>
+<span class="sd">Assume that the system variable has the following structure.</span>
+
+<span class="sd">system = {</span>
+<span class="sd">    'dyn': (F, G, Q),</span>
+<span class="sd">    'obs': (H, R)</span>
+<span class="sd">}</span>
+<span class="sd">'''</span>
+
+<span class="k">def</span> <span class="nf">kalman_filter</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">U</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">U</span><span class="p">):</span>
+        <span class="n">m</span><span class="p">,</span> <span class="n">C</span> <span class="o">=</span> <span class="n">kalman_step</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">m</span><span class="p">,</span> <span class="n">C</span>
+
+<span class="k">def</span> <span class="nf">kalman_step</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
+    <span class="n">m_c</span><span class="p">,</span> <span class="n">C_c</span> <span class="o">=</span> <span class="n">correct</span><span class="p">(</span><span class="o">*</span><span class="n">system</span><span class="p">[</span><span class="s1">'obs'</span><span class="p">],</span> <span class="n">m</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">m_p</span><span class="p">,</span> <span class="n">C_p</span> <span class="o">=</span> <span class="n">predict</span><span class="p">(</span><span class="o">*</span><span class="n">system</span><span class="p">[</span><span class="s1">'dyn'</span><span class="p">],</span> <span class="n">m_c</span><span class="p">,</span> <span class="n">C_c</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">m_p</span><span class="p">,</span> <span class="n">C_p</span>
+
+<span class="k">def</span> <span class="nf">correct</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="n">cholesky</span><span class="p">(</span><span class="n">H</span> <span class="o">@</span> <span class="n">C</span> <span class="o">@</span> <span class="n">H</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">R</span><span class="p">)</span>
+    <span class="n">Z</span> <span class="o">=</span> <span class="n">solve_tril</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">H</span> <span class="o">@</span> <span class="n">C</span><span class="p">)</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">solve_triu</span><span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">Z</span><span class="p">)</span>
+    <span class="n">m_c</span> <span class="o">=</span> <span class="n">m</span> <span class="o">+</span> <span class="n">X</span> <span class="o">@</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">H</span> <span class="o">@</span> <span class="n">m</span><span class="p">)</span>
+    <span class="n">C_c</span> <span class="o">=</span> <span class="n">C</span> <span class="o">-</span> <span class="n">Z</span> <span class="o">@</span> <span class="n">Z</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">return</span> <span class="n">m_c</span><span class="p">,</span> <span class="n">C_c</span>
+
+<span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
+    <span class="n">m_p</span> <span class="o">=</span> <span class="n">F</span> <span class="o">@</span> <span class="n">m</span> <span class="o">+</span> <span class="n">G</span> <span class="o">@</span> <span class="n">u</span>
+    <span class="n">C_p</span> <span class="o">=</span> <span class="n">F</span> <span class="o">@</span> <span class="n">C</span> <span class="o">@</span> <span class="n">F</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">Q</span>
+    <span class="k">return</span> <span class="n">m_p</span><span class="p">,</span> <span class="n">C_p</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+
+    </div>
+    <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
+<li><a class="tag p-category" href="../../categories/control/" rel="tag">control</a></li>
+            <li><a class="tag p-category" href="../../categories/dynamical-systems/" rel="tag">dynamical-systems</a></li>
+            <li><a class="tag p-category" href="../../categories/probability/" rel="tag">probability</a></li>
+        </ul>
+<ul class="pager hidden-print">
+<li class="previous">
+                <a href="../parameterizing_joint_gaussians/" rel="prev" title="Parameterizing Joint Gaussians">Previous post</a>
+            </li>
+        </ul></nav></aside><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML" integrity="sha256-SDRP1VVYu+tgAGKhddBSl5+ezofHKZeI+OzxakbIe/Y=" crossorigin="anonymous"></script><script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+    },
+    displayAlign: 'center', // Change this to 'left' if you want left-aligned equations.
+    "HTML-CSS": {
+        styles: {'.MathJax_Display': {"margin": 0}}
+    }
+});
+</script></article>
+</div>
+        <!--End of body content-->
+
+        <footer id="footer">
+            Contents © 2018         <a href="mailto:pschulam@gmail.com">Peter Schulam</a> - Powered by         <a href="https://getnikola.com" rel="nofollow">Nikola</a>         
+            
+        </footer>
+</div>
+</div>
+
+
+            <script src="../../assets/js/jquery.min.js"></script><script src="../../assets/js/bootstrap.min.js"></script><script src="../../assets/js/moment-with-locales.min.js"></script><script src="../../assets/js/fancydates.js"></script><script src="../../assets/js/jquery.colorbox-min.js"></script><script>$('a.image-reference:not(.islink) img:not(.islink)').parent().colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script><!-- fancy dates --><script>
+    moment.locale("en");
+    fancydates(0, "YYYY-MM-DD HH:mm");
+    </script><!-- end fancy dates -->
+</body>
+</html>
