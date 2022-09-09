@@ -17,7 +17,7 @@ social: false  # includes social icons at the bottom of the page
 
 I'm currently an applied scientist at <a href='https://www.amazon.science/'>Amazon Alexa AI</a> in Manhattan Beach, CA. I have broad interests in machine learning, statistics, and software, but I especially enjoy working on ways to make machine learning systems more reliable.
 
-I did my PhD in the computer science department at Johns Hopkins University, my masters at CMU, and my undergrad at Princeton. You can find an up-to-date list of my publications on my <a href='https://scholar.google.com/citations?user=GSnIrqwAAAAJ&hl=en'>Google Scholar profile<a>.
+I did my PhD in the computer science department at Johns Hopkins University, my masters at CMU, and my undergrad at Princeton. You can find an up-to-date list of my publications on <a href='https://scholar.google.com/citations?user=GSnIrqwAAAAJ&hl=en'>Google Scholar<a>.
 
 My wife and I have two young kids, and we live in El Segundo, CA. When I'm not wrangling children, I spend a lot of time in the ocean.
 
