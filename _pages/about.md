@@ -15,7 +15,9 @@ selected_papers: false # includes a list of papers marked as "selected={true}"
 social: false  # includes social icons at the bottom of the page
 ---
 
-I'm an applied scientist at Amazon Alexa AI.
+I'm currently an applied scientist at Amazon Alexa AI in Manhattan Beach, CA. Before coming to Amazon, I was an engineer at <a href='https://www.bayesianhealth.com/'>Bayesian Health</a>.
+
+I did my PhD in the computer science department at Johns Hopkins University, my masters at CMU, and my undergrad at Princeton. You can find an up-to-date list of my publications on my <a href='https://scholar.google.com/citations?user=GSnIrqwAAAAJ&hl=en'>Google Scholar profile<a>.
 
 <!-- Write your biography here. Tell the world about yourself. Link to your favorite [subreddit](http://reddit.com). You can put a picture in, too. The code is already in, just name your picture `prof_pic.jpg` and put it in the `img/` folder.
 
