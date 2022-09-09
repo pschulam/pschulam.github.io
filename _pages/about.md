@@ -6,8 +6,8 @@ subtitle: Applied Scientist at <a href='https://www.amazon.science/'>Amazon Alex
 
 profile:
   align: right
-  image: prof_pic.jpg
-  image_circular: false # crops the image to make it circular
+  image: pschulam3.jpg
+  image_circular: true # crops the image to make it circular
   address: 
 
 news: false  # includes a list of news items
