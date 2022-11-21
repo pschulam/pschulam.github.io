@@ -2,7 +2,7 @@
 layout: about
 title: about
 permalink: /
-subtitle: Machine Learning Scientist and Engineer
+subtitle: 
 
 profile:
   align: right
@@ -15,7 +15,7 @@ selected_papers: false # includes a list of papers marked as "selected={true}"
 social: false  # includes social icons at the bottom of the page
 ---
 
-I'm currently an applied scientist at <a href='https://www.amazon.science/'>Amazon Alexa AI</a> in Manhattan Beach, CA. I have broad interests in machine learning, statistics, and software. I like thinking about the nitty-gritty details of getting ML to work in real applications, especially when there are demanding scalability/latency requirements.
+I'm currently an applied scientist at <a href='https://www.amazon.science/'>Amazon Alexa AI</a>. I like thinking about the nitty-gritty details of getting ML to work in real applications, especially when there are demanding scalability/latency requirements.
 
 I did my PhD in the computer science department at Johns Hopkins University, my masters at CMU, and my undergrad at Princeton. You can find an up-to-date list of my publications on <a href='https://scholar.google.com/citations?user=GSnIrqwAAAAJ&hl=en'>Google Scholar<a>.
 
