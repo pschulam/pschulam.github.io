@@ -15,7 +15,7 @@ selected_papers: false # includes a list of papers marked as "selected={true}"
 social: false  # includes social icons at the bottom of the page
 ---
 
-I'm a senior applied scientist at Amazon, where I work on machine learning and natural language processing.
+I'm a Principal Applied Scientist at Microsoft, where I work to make AI safe, reliable, and responsible.
 
 I did my PhD in the computer science department at Johns Hopkins University, my masters at CMU, and my undergrad at Princeton. You can find an up-to-date list of my publications on <a href='https://scholar.google.com/citations?user=GSnIrqwAAAAJ&hl=en'>Google Scholar<a>.
 
